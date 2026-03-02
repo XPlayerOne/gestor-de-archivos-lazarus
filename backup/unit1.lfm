@@ -1,0 +1,82 @@
+object Form1: TForm1
+  Left = 404
+  Height = 376
+  Top = 360
+  Width = 728
+  Caption = 'Home'
+  ClientHeight = 376
+  ClientWidth = 728
+  LCLVersion = '4.2.0.0'
+  OnCreate = FormCreate
+  object ShellTreeView1: TShellTreeView
+    Left = 0
+    Height = 332
+    Top = 26
+    Width = 151
+    Align = alLeft
+    Images = ImageList1
+    PopupMenu = PopupMenu1
+    ShowLines = False
+    TabOrder = 0
+    Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowRoot, tvoToolTips, tvoThemedDraw]
+    ShellListView = ShellListView1
+    OnClick = ShellListView1Click
+  end
+  object ShellListView1: TShellListView
+    Left = 151
+    Height = 332
+    Top = 26
+    Width = 577
+    Align = alClient
+    Color = clDefault
+    LargeImages = ImageList1
+    PopupMenu = PopupMenu1
+    SmallImages = ImageList1
+    TabOrder = 1
+    ViewStyle = vsIcon
+    ObjectTypes = [otFolders, otNonFolders]
+    ShellTreeView = ShellTreeView1
+    OnClick = ShellListView1Click
+    OnDblClick = ShellListView1DblClick
+  end
+  object ToolBar1: TToolBar
+    Left = 0
+    Height = 26
+    Top = 0
+    Width = 728
+    Caption = 'ToolBar1'
+    TabOrder = 2
+  end
+  object StatusBar1: TStatusBar
+    Left = 0
+    Height = 18
+    Top = 358
+    Width = 728
+    Panels = <>
+  end
+  object PopupMenu1: TPopupMenu
+    Left = 342
+    Top = 223
+    object MenuItem1: TMenuItem
+      Caption = 'Renombrar'
+      OnClick = MenuItem1Click
+    end
+    object MenuItem2: TMenuItem
+      Caption = 'Borrar'
+      OnClick = MenuItem2Click
+    end
+  end
+  object ImageList1: TImageList
+    Left = 290
+    Top = 122
+    Bitmap = {
+      4C7A010000001000000010000000BB0000000000000078DA7BFEFC79C3BD4B07
+      67DD38BA62CD8DA3CB5701F14A10BE7962DDA2E7CF9F353F07CA43713D1A068B
+      83F4EE6AD4FABFB34113031F9911FAECC1F553135EBC7881A11F2406C2207BF7
+      F4BAFDDD373DEA371C4F43C2D3B1E343B3135E3EBE7BB5EBDEC169FBAF2E4BFC
+      4D06FE75F7E0B45DB7675BFDBA3DC3E43F39F8CE6CEBBFE4EA1DC5C303DF9A6E
+      4C91DED3D3DCDF5F9860F09F1C7C7A9ADBDB27F7AEF503F3D04A68DE05E1D548
+      78150EF1D5203D8FEF5DED01005B5FB84A
+    }
+  end
+end
