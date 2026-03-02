@@ -6,13 +6,13 @@ object Form1: TForm1
   Caption = 'Home'
   ClientHeight = 376
   ClientWidth = 728
-  LCLVersion = '4.2.0.0'
+  LCLVersion = '4.6.0.0'
   OnCreate = FormCreate
   object ShellTreeView1: TShellTreeView
     Left = 0
-    Height = 332
+    Height = 327
     Top = 26
-    Width = 151
+    Width = 216
     Align = alLeft
     Images = ImageList1
     PopupMenu = PopupMenu1
@@ -23,10 +23,10 @@ object Form1: TForm1
     OnClick = ShellListView1Click
   end
   object ShellListView1: TShellListView
-    Left = 151
-    Height = 332
+    Left = 216
+    Height = 327
     Top = 26
-    Width = 577
+    Width = 512
     Align = alClient
     Color = clDefault
     LargeImages = ImageList1
@@ -49,8 +49,8 @@ object Form1: TForm1
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Height = 18
-    Top = 358
+    Height = 23
+    Top = 353
     Width = 728
     Panels = <>
   end
