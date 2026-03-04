@@ -128,7 +128,8 @@ end;
 
 procedure TForm1.ShellListView1Click(Sender: TObject);
 begin
-
+  if Assigned(ShellListView1.Selected) and Assigned(StatusBar1) then
+    StatusBar1.SimpleText := 'Seleccionado: ' + ShellListView1.Selected.Caption;
 end;
 
 procedure TForm1.MenuItem1Click(Sender: TObject);

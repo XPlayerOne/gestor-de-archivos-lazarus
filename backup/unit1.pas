@@ -72,9 +72,10 @@ begin
     StatusBar1.SimpleText := 'Elementos: ' + IntToStr(ShellListView1.Items.Count);
 end;
 
-procedure TForm1.ShellTreeView1Click(Sender: TObject);
+procedure TForm1.ShellListView1Click(Sender: TObject);
 begin
-  ActualizarEstado;
+  if Assigned(ShellListView1.Selected) and Assigned(StatusBar1) then
+    StatusBar1.SimpleText := 'Seleccionado: ' + ShellListView1.Selected.Caption;
 end;
 
 procedure TForm1.ShellListView1DblClick(Sender: TObject);
