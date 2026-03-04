@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ShellCtrls,
-  Menus, LclIntf, ComCtrls, StdCtrls, ExtCtrls;
+  Menus, LclIntf, ComCtrls, StdCtrls, ExtCtrls, LCLType, FileUtil;
 
 type
   { TForm1 }
@@ -21,6 +21,7 @@ type
     StatusBar1: TStatusBar;
     ToolBar1: TToolBar;
     procedure FormCreate(Sender: TObject);
+    procedure EditRutaKeyDown(Sender: TObject; var Key: Word; {%H-}Shift: TShiftState);
     procedure MenuItem1Click(Sender: TObject);
     procedure MenuItem2Click(Sender: TObject);
     procedure ShellListView1Click(Sender: TObject);
@@ -42,8 +43,23 @@ implementation
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
-  // Evitamos llamar a ActualizarEstado aquí para prevenir el SIGSEGV de inicio
-  ShellTreeView1.Root := GetEnvironmentVariable('HOME');
+  ShellTreeView1.Root := '';  // <- comillas vacías = mostrar todos los discos
+  ShellListView1.ViewStyle := vsReport;
+  ShellListView1.Refresh;
+end;
+
+procedure TForm1.EditRutaKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+begin
+  if Key = VK_RETURN then // Si el usuario presiona Enter
+  begin
+    if DirectoryExists(EditRuta.Text) then
+    begin
+      ShellListView1.Root := EditRuta.Text;
+      ShellTreeView1.Path := EditRuta.Text;
+    end
+    else
+      ShowMessage('La ruta no existe.');
+  end;
 end;
 
 procedure TForm1.ActualizarEstado;
@@ -73,6 +89,7 @@ begin
     begin
       // NAVEGACIÓN: Entrar a la carpeta
       ShellListView1.Root := RutaSeleccionada;
+      ShellTreeView1.Path := RutaSeleccionada;
       if Assigned(EditRuta) then EditRuta.Text := RutaSeleccionada;
     end
     else
@@ -80,10 +97,38 @@ begin
   end;
 end;
 
+procedure TForm1.MenuItem2Click(Sender: TObject);
+var
+  Ruta: string;
+begin
+  if Assigned(ShellListView1.Selected) then
+  begin
+    Ruta := ShellListView1.GetPathFromItem(ShellListView1.Selected);
+    if QuestionDlg('Borrar', '¿Eliminar ' + ExtractFileName(Ruta) + '?',
+       mtConfirmation, [mrYes, mrNo], 0) = mrYes then
+    begin
+      if DirectoryExists(Ruta) then
+      begin
+        // Borra carpeta aunque tenga contenido
+        if not DeleteDirectory(Ruta, True) then
+          ShowMessage('No se pudo eliminar la carpeta.')
+        else
+          ShellListView1.Refresh;
+      end
+      else
+      begin
+        if not DeleteFile(Ruta) then
+          ShowMessage('No se pudo eliminar el archivo.')
+        else
+          ShellListView1.Refresh;
+      end;
+    end;
+  end;
+end;
+
 procedure TForm1.ShellListView1Click(Sender: TObject);
 begin
-  if Assigned(ShellListView1.Selected) and Assigned(StatusBar1) then
-    StatusBar1.SimpleText := 'Seleccionado: ' + ShellListView1.Selected.Caption;
+
 end;
 
 procedure TForm1.MenuItem1Click(Sender: TObject);
@@ -101,17 +146,17 @@ begin
   end;
 end;
 
-procedure TForm1.MenuItem2Click(Sender: TObject);
-var Ruta: string;
-begin
-  if Assigned(ShellListView1.Selected) then
-  begin
-    Ruta := ShellListView1.GetPathFromItem(ShellListView1.Selected);
-    if QuestionDlg('Borrar', '¿Eliminar ' + ExtractFileName(Ruta) + '?', mtConfirmation, [mrYes, mrNo], 0) = mrYes then
-    begin
-      if DeleteFile(Ruta) or RemoveDir(Ruta) then ShellListView1.Refresh;
-    end;
-  end;
-end;
+//procedure TForm1.MenuItem2Click(Sender: TObject);
+//var Ruta: string;
+//begin
+  //if Assigned(ShellListView1.Selected) then
+  //begin
+    //Ruta := ShellListView1.GetPathFromItem(ShellListView1.Selected);
+    //if QuestionDlg('Borrar', '¿Eliminar ' + ExtractFileName(Ruta) + '?', mtConfirmation, [mrYes, mrNo], 0) = mrYes then
+    //begin
+      //if DeleteFile(Ruta) or RemoveDir(Ruta) then ShellListView1.Refresh;
+    //end;
+  //end;
+  //end;
 
 end.

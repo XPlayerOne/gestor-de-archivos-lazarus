@@ -3,7 +3,7 @@ object Form1: TForm1
   Height = 376
   Top = 360
   Width = 728
-  Caption = 'Home'
+  Caption = 'Gestor de Archivos'
   ClientHeight = 376
   ClientWidth = 728
   LCLVersion = '4.6.0.0'
@@ -14,11 +14,13 @@ object Form1: TForm1
     Top = 26
     Width = 216
     Align = alLeft
+    AutoExpand = True
     Images = ImageList1
     PopupMenu = PopupMenu1
     ShowLines = False
+    StateImages = ImageList1
     TabOrder = 0
-    Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowRoot, tvoToolTips, tvoThemedDraw]
+    Options = [tvoAutoExpand, tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowRoot, tvoToolTips, tvoThemedDraw]
     ShellListView = ShellListView1
     OnClick = ShellListView1Click
   end
@@ -30,8 +32,10 @@ object Form1: TForm1
     Align = alClient
     Color = clDefault
     LargeImages = ImageList1
+    ParentShowHint = False
     PopupMenu = PopupMenu1
-    SmallImages = ImageList1
+    ShowHint = True
+    SmallImagesWidth = 16
     TabOrder = 1
     ViewStyle = vsIcon
     ObjectTypes = [otFolders, otNonFolders]
