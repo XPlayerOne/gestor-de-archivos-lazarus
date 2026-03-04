@@ -24,9 +24,12 @@ type
     procedure EditRutaKeyDown(Sender: TObject; var Key: Word; {%H-}Shift: TShiftState);
     procedure MenuItem1Click(Sender: TObject);
     procedure MenuItem2Click(Sender: TObject);
+    procedure ShellListView1Change(Sender: TObject; Item: TListItem;
+      Change: TItemChange);
     procedure ShellListView1Click(Sender: TObject);
     procedure ShellListView1DblClick(Sender: TObject);
     procedure ShellTreeView1Click(Sender: TObject);
+    procedure ShellTreeView1GetImageIndex(Sender: TObject; Node: TTreeNode);
   private
     procedure ActualizarEstado;
   public
@@ -77,6 +80,18 @@ begin
   ActualizarEstado;
 end;
 
+procedure TForm1.ShellTreeView1GetImageIndex(Sender: TObject; Node: TTreeNode);
+begin
+  // Verificamos si el nodo actual es un directorio
+  if DirectoryExists(ShellTreeView1.GetPathFromNode(Node)) then
+    Node.ImageIndex := 0  // Índice de la carpeta en tu ImageList
+  else
+    Node.ImageIndex := 1; // Índice del documento en tu ImageList
+
+  // Esto asegura que el icono se mantenga igual cuando se selecciona
+  Node.SelectedIndex := Node.ImageIndex;
+end;
+
 procedure TForm1.ShellListView1DblClick(Sender: TObject);
 var
   RutaSeleccionada: string;
@@ -124,6 +139,12 @@ begin
       end;
     end;
   end;
+end;
+
+procedure TForm1.ShellListView1Change(Sender: TObject; Item: TListItem;
+  Change: TItemChange);
+begin
+
 end;
 
 procedure TForm1.ShellListView1Click(Sender: TObject);

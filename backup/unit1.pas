@@ -24,9 +24,12 @@ type
     procedure EditRutaKeyDown(Sender: TObject; var Key: Word; {%H-}Shift: TShiftState);
     procedure MenuItem1Click(Sender: TObject);
     procedure MenuItem2Click(Sender: TObject);
+    procedure ShellListView1Change(Sender: TObject; Item: TListItem;
+      Change: TItemChange);
     procedure ShellListView1Click(Sender: TObject);
     procedure ShellListView1DblClick(Sender: TObject);
     procedure ShellTreeView1Click(Sender: TObject);
+    procedure ShellTreeView1GetImageIndex(Sender: TObject; Node: TTreeNode);
   private
     procedure ActualizarEstado;
   public
@@ -46,6 +49,7 @@ begin
   ShellTreeView1.Root := '';  // <- comillas vacías = mostrar todos los discos
   ShellListView1.ViewStyle := vsReport;
   ShellListView1.Refresh;
+  ShellListView1.ImageIndex := 0;
 end;
 
 procedure TForm1.EditRutaKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -72,10 +76,21 @@ begin
     StatusBar1.SimpleText := 'Elementos: ' + IntToStr(ShellListView1.Items.Count);
 end;
 
-procedure TForm1.ShellListView1Click(Sender: TObject);
+procedure TForm1.ShellTreeView1Click(Sender: TObject);
 begin
-  if Assigned(ShellListView1.Selected) and Assigned(StatusBar1) then
-    StatusBar1.SimpleText := 'Seleccionado: ' + ShellListView1.Selected.Caption;
+  ActualizarEstado;
+end;
+
+procedure TForm1.ShellTreeView1GetImageIndex(Sender: TObject; Node: TTreeNode);
+begin
+  // Verificamos si el nodo actual es un directorio
+  if DirectoryExists(ShellTreeView1.GetPathFromNode(Node)) then
+    Node.ImageIndex := 0  // Índice de la carpeta en tu ImageList
+  else
+    Node.ImageIndex := 1; // Índice del documento en tu ImageList
+
+  // Esto asegura que el icono se mantenga igual cuando se selecciona
+  Node.SelectedIndex := Node.ImageIndex;
 end;
 
 procedure TForm1.ShellListView1DblClick(Sender: TObject);
@@ -127,9 +142,16 @@ begin
   end;
 end;
 
-procedure TForm1.ShellListView1Click(Sender: TObject);
+procedure TForm1.ShellListView1Change(Sender: TObject; Item: TListItem;
+  Change: TItemChange);
 begin
 
+end;
+
+procedure TForm1.ShellListView1Click(Sender: TObject);
+begin
+  if Assigned(ShellListView1.Selected) and Assigned(StatusBar1) then
+    StatusBar1.SimpleText := 'Seleccionado: ' + ShellListView1.Selected.Caption;
 end;
 
 procedure TForm1.MenuItem1Click(Sender: TObject);
