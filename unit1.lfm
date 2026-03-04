@@ -1,7 +1,7 @@
 object Form1: TForm1
-  Left = 404
+  Left = 552
   Height = 376
-  Top = 360
+  Top = 313
   Width = 728
   Caption = 'Gestor de Archivos'
   ClientHeight = 376
@@ -35,6 +35,7 @@ object Form1: TForm1
     Align = alClient
     Color = clDefault
     LargeImages = ImageList1
+    MultiSelect = True
     ParentShowHint = False
     PopupMenu = PopupMenu1
     ShowHint = True
@@ -55,6 +56,17 @@ object Form1: TForm1
     Width = 728
     Caption = 'ToolBar1'
     TabOrder = 2
+    object btnAtras: TToolButton
+      Left = 1
+      Top = 2
+      Caption = 'Atras'
+      OnClick = btnAtrasClick
+    end
+    object btnAdelante: TToolButton
+      Left = 24
+      Top = 2
+      Caption = 'Adelante'
+    end
   end
   object StatusBar1: TStatusBar
     Left = 0
@@ -62,10 +74,15 @@ object Form1: TForm1
     Top = 358
     Width = 728
     Panels = <>
+    SimplePanel = False
   end
   object PopupMenu1: TPopupMenu
     Left = 342
     Top = 223
+    object MenuItem3: TMenuItem
+      Caption = 'Abrir'
+      OnClick = MenuItem3Click
+    end
     object MenuItem1: TMenuItem
       Caption = 'Renombrar'
       OnClick = MenuItem1Click
