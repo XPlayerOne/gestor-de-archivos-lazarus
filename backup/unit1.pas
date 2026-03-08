@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ShellCtrls,
-  Menus, LclIntf, ComCtrls, StdCtrls, ExtCtrls, LCLType, FileUtil;
+  Menus, LclIntf, ComCtrls, StdCtrls, ExtCtrls, LCLType, FileUtil, ULogica;
 
 type
   { TForm1 }
@@ -15,20 +15,24 @@ type
     ImageList1: TImageList;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
+    MenuItemActualizar: TMenuItem;
     PopupMenu1: TPopupMenu;
     ShellListView1: TShellListView;
     ShellTreeView1: TShellTreeView;
     StatusBar1: TStatusBar;
+    TimerRefresco: TTimer;
     ToolBar1: TToolBar;
     procedure FormCreate(Sender: TObject);
     procedure EditRutaKeyDown(Sender: TObject; var Key: Word; {%H-}Shift: TShiftState);
     procedure MenuItem1Click(Sender: TObject);
     procedure MenuItem2Click(Sender: TObject);
+    procedure MenuItemActualizarClick(Sender: TObject);
     procedure ShellListView1Click(Sender: TObject);
     procedure ShellListView1DblClick(Sender: TObject);
     procedure ShellTreeView1Click(Sender: TObject);
   private
     procedure ActualizarEstado;
+    procedure CambiarRuta(const NuevaRuta: string);
   public
   end;
 
@@ -43,20 +47,28 @@ implementation
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
-  ShellTreeView1.Root := '';  // <- comillas vacías = mostrar todos los discos
+  ShellTreeView1.Root := '';
   ShellListView1.ViewStyle := vsReport;
   ShellListView1.Refresh;
+  ActualizarEstado;
+end;
+
+procedure TForm1.CambiarRuta(const NuevaRuta: string);
+begin
+  if EsDirectorio(NuevaRuta) then
+  begin
+    ShellListView1.Root := NuevaRuta;
+    ShellTreeView1.Path := NuevaRuta;
+    ActualizarEstado;
+  end;
 end;
 
 procedure TForm1.EditRutaKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
-  if Key = VK_RETURN then // Si el usuario presiona Enter
+  if Key = VK_RETURN then
   begin
-    if DirectoryExists(EditRuta.Text) then
-    begin
-      ShellListView1.Root := EditRuta.Text;
-      ShellTreeView1.Path := EditRuta.Text;
-    end
+    if EsDirectorio(EditRuta.Text) then
+      CambiarRuta(EditRuta.Text)
     else
       ShowMessage('La ruta no existe.');
   end;
@@ -64,18 +76,28 @@ end;
 
 procedure TForm1.ActualizarEstado;
 begin
-  // Verificamos que los componentes existan antes de usarlos
   if Assigned(EditRuta) then
-    EditRuta.Text := ShellTreeView1.Path;
+    EditRuta.Text := ShellListView1.Root;
 
   if Assigned(StatusBar1) then
     StatusBar1.SimpleText := 'Elementos: ' + IntToStr(ShellListView1.Items.Count);
 end;
 
-procedure TForm1.ShellListView1Click(Sender: TObject);
+procedure TForm1.MenuItemActualizarClick(Sender: TObject);
+var
+  RutaActual: string;
 begin
-  if Assigned(ShellListView1.Selected) and Assigned(StatusBar1) then
-    StatusBar1.SimpleText := 'Seleccionado: ' + ShellListView1.Selected.Caption;
+  RutaActual := ShellListView1.Root;
+  ShellListView1.Root := '';
+  ShellListView1.Root := RutaActual;
+  ShellTreeView1.Refresh;
+  ActualizarEstado;
+end;
+
+procedure TForm1.ShellTreeView1Click(Sender: TObject);
+begin
+  ShellListView1.Root := ShellTreeView1.Path;
+  ActualizarEstado;
 end;
 
 procedure TForm1.ShellListView1DblClick(Sender: TObject);
@@ -86,15 +108,10 @@ begin
   begin
     RutaSeleccionada := ShellListView1.GetPathFromItem(ShellListView1.Selected);
 
-    if DirectoryExists(RutaSeleccionada) then
-    begin
-      // NAVEGACIÓN: Entrar a la carpeta
-      ShellListView1.Root := RutaSeleccionada;
-      ShellTreeView1.Path := RutaSeleccionada;
-      if Assigned(EditRuta) then EditRuta.Text := RutaSeleccionada;
-    end
+    if EsDirectorio(RutaSeleccionada) then
+      CambiarRuta(RutaSeleccionada)
     else
-      OpenDocument(RutaSeleccionada); // ABRIR: Si es archivo
+      OpenDocument(RutaSeleccionada);
   end;
 end;
 
@@ -105,59 +122,30 @@ begin
   if Assigned(ShellListView1.Selected) then
   begin
     Ruta := ShellListView1.GetPathFromItem(ShellListView1.Selected);
-    if QuestionDlg('Borrar', '¿Eliminar ' + ExtractFileName(Ruta) + '?',
-       mtConfirmation, [mrYes, mrNo], 0) = mrYes then
+    if BorrarElemento(Ruta) then
     begin
-      if DirectoryExists(Ruta) then
-      begin
-        // Borra carpeta aunque tenga contenido
-        if not DeleteDirectory(Ruta, True) then
-          ShowMessage('No se pudo eliminar la carpeta.')
-        else
-          ShellListView1.Refresh;
-      end
-      else
-      begin
-        if not DeleteFile(Ruta) then
-          ShowMessage('No se pudo eliminar el archivo.')
-        else
-          ShellListView1.Refresh;
-      end;
+      MenuItemActualizarClick(Sender);
+    end;
+  end;
+end;
+
+procedure TForm1.MenuItem1Click(Sender: TObject);
+var ViejaRuta, NuevaRuta: string;
+begin
+  if Assigned(ShellListView1.Selected) then
+  begin
+    ViejaRuta := ShellListView1.GetPathFromItem(ShellListView1.Selected);
+    if RenombrarElemento(ViejaRuta, NuevaRuta) then
+    begin
+      MenuItemActualizarClick(Sender);
     end;
   end;
 end;
 
 procedure TForm1.ShellListView1Click(Sender: TObject);
 begin
-
+  if Assigned(ShellListView1.Selected) and Assigned(StatusBar1) then
+    StatusBar1.SimpleText := 'Seleccionado: ' + ShellListView1.Selected.Caption;
 end;
-
-procedure TForm1.MenuItem1Click(Sender: TObject);
-var ViejaRuta, NuevaRuta, NuevoNombre: string;
-begin
-  if Assigned(ShellListView1.Selected) then
-  begin
-    ViejaRuta := ShellListView1.GetPathFromItem(ShellListView1.Selected);
-    NuevoNombre := ExtractFileName(ViejaRuta);
-    if InputQuery('Renombrar', 'Nuevo nombre:', NuevoNombre) then
-    begin
-      NuevaRuta := ExtractFilePath(ViejaRuta) + NuevoNombre;
-      if RenameFile(ViejaRuta, NuevaRuta) then ShellListView1.Refresh;
-    end;
-  end;
-end;
-
-//procedure TForm1.MenuItem2Click(Sender: TObject);
-//var Ruta: string;
-//begin
-  //if Assigned(ShellListView1.Selected) then
-  //begin
-    //Ruta := ShellListView1.GetPathFromItem(ShellListView1.Selected);
-    //if QuestionDlg('Borrar', '¿Eliminar ' + ExtractFileName(Ruta) + '?', mtConfirmation, [mrYes, mrNo], 0) = mrYes then
-    //begin
-      //if DeleteFile(Ruta) or RemoveDir(Ruta) then ShellListView1.Refresh;
-    //end;
-  //end;
-  //end;
 
 end.

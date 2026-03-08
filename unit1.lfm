@@ -63,6 +63,10 @@ object Form1: TForm1
   object PopupMenu1: TPopupMenu
     Left = 342
     Top = 223
+    object MenuItemActualizar: TMenuItem
+      Caption = 'Actualizar'
+      OnClick = MenuItemActualizarClick
+    end
     object MenuItem1: TMenuItem
       Caption = 'Renombrar'
       OnClick = MenuItem1Click
