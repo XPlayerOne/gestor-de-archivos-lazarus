@@ -1,16 +1,16 @@
 object Form1: TForm1
-  Left = 404
-  Height = 376
-  Top = 360
-  Width = 728
+  Left = 451
+  Height = 503
+  Top = 349
+  Width = 633
   Caption = 'Gestor de Archivos'
-  ClientHeight = 376
-  ClientWidth = 728
-  LCLVersion = '4.6.0.0'
+  ClientHeight = 503
+  ClientWidth = 633
+  LCLVersion = '4.2.0.0'
   OnCreate = FormCreate
   object ShellTreeView1: TShellTreeView
     Left = 0
-    Height = 327
+    Height = 459
     Top = 26
     Width = 216
     Align = alLeft
@@ -28,9 +28,9 @@ object Form1: TForm1
   end
   object ShellListView1: TShellListView
     Left = 216
-    Height = 327
+    Height = 459
     Top = 26
-    Width = 512
+    Width = 417
     Align = alClient
     Color = clDefault
     LargeImages = ImageList1
@@ -44,25 +44,37 @@ object Form1: TForm1
     ShellTreeView = ShellTreeView1
     OnClick = ShellListView1Click
     OnDblClick = ShellListView1DblClick
+    OnKeyDown = ShellListView1KeyDown
   end
   object ToolBar1: TToolBar
     Left = 0
     Height = 26
     Top = 0
-    Width = 728
+    Width = 633
     Caption = 'ToolBar1'
     TabOrder = 2
+    object ToolButton1: TToolButton
+      Left = 1
+      Top = 2
+      Caption = 'Atrás'
+      ParentShowHint = False
+      OnClick = ToolButton1Click
+    end
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Height = 23
-    Top = 353
-    Width = 728
+    Height = 18
+    Top = 485
+    Width = 633
     Panels = <>
   end
   object PopupMenu1: TPopupMenu
     Left = 342
     Top = 223
+    object MenuItem6: TMenuItem
+      Caption = 'Abrir'
+      OnClick = MenuItem6Click
+    end
     object MenuItemActualizar: TMenuItem
       Caption = 'Actualizar'
       OnClick = MenuItemActualizarClick
@@ -71,9 +83,21 @@ object Form1: TForm1
       Caption = 'Renombrar'
       OnClick = MenuItem1Click
     end
+    object MenuItem4: TMenuItem
+      Caption = 'Copiar'
+      OnClick = MenuItem4Click
+    end
+    object MenuItem5: TMenuItem
+      Caption = 'Pegar'
+      OnClick = MenuItem5Click
+    end
     object MenuItem2: TMenuItem
-      Caption = 'Borrar'
+      Caption = 'Eliminar'
       OnClick = MenuItem2Click
+    end
+    object MenuItem3: TMenuItem
+      Caption = 'Crear Carpeta'
+      OnClick = MenuItem3Click
     end
   end
   object ImageList1: TImageList
