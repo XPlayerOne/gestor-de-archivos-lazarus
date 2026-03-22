@@ -27,7 +27,7 @@ type
     ToolBar1: TToolBar;
     ToolButton1: TToolButton;
     procedure FormCreate(Sender: TObject);
-    procedure EditRutaKeyDown(Sender: TObject; var Key: Word; {%H-}Shift: TShiftState);
+    procedure EditRutaKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure MenuItem1Click(Sender: TObject);
     procedure MenuItem2Click(Sender: TObject);
     procedure MenuItem3Click(Sender: TObject);
@@ -37,9 +37,10 @@ type
     procedure MenuItemActualizarClick(Sender: TObject);
     procedure ShellListView1Click(Sender: TObject);
     procedure ShellListView1DblClick(Sender: TObject);
-    procedure ShellListView1KeyDown(Sender: TObject; var Key: Word;
-      Shift: TShiftState);
+    procedure ShellListView1KeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure ShellTreeView1Click(Sender: TObject);
+    procedure ShellTreeView1DragDrop(Sender, Source: TObject; X, Y: Integer);
+    procedure ShellTreeView1DragOver(Sender, Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
     procedure ToolButton1Click(Sender: TObject);
   private
     procedure ActualizarEstado;
@@ -59,7 +60,12 @@ implementation
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   ShellTreeView1.Root := '';
-  ShellListView1.ViewStyle := vsReport;
+  ShellListView1.ViewStyle := vsIcon;
+
+  // Habilitamos selección múltiple y arrastrar/soltar por código
+  ShellListView1.MultiSelect := True;
+  ShellListView1.DragMode := dmAutomatic;
+
   RefrescarVistas(ShellListView1, ShellTreeView1);
   ActualizarEstado;
 end;
@@ -111,11 +117,8 @@ var
   RutaActual, RutaPadre: string;
 begin
   RutaActual := ShellListView1.Root;
-  // ExcludeTrailingPathDelimiter quita la barra final si existe
-  // ExtractFileDir obtiene el directorio padre
   RutaPadre := ExtractFileDir(ExcludeTrailingPathDelimiter(RutaActual));
 
-  // Si RutaPadre no está vacía y es diferente a la actual, cambiamos
   if (RutaPadre <> '') and (RutaPadre <> RutaActual) then
     CambiarRuta(RutaPadre);
 end;
@@ -129,21 +132,31 @@ procedure TForm1.ShellListView1KeyDown(Sender: TObject; var Key: Word; Shift: TS
 begin
   if Key = VK_RETURN then
   begin
-    MenuItemAbrirClick(Sender);
+    MenuItem6Click(Sender);
   end;
 end;
 
 procedure TForm1.MenuItem2Click(Sender: TObject);
 var
-  Ruta: string;
+  i: Integer;
+  Exito: Boolean;
 begin
-  if Assigned(ShellListView1.Selected) then
+  if ShellListView1.SelCount = 0 then Exit;
+
+  if MessageDlg('Eliminar', '¿Estás seguro de eliminar los ' + IntToStr(ShellListView1.SelCount) + ' elementos seleccionados?', mtConfirmation, [mbYes, mbNo], 0) = mrYes then
   begin
-    Ruta := ShellListView1.GetPathFromItem(ShellListView1.Selected);
-    if BorrarElemento(Ruta) then
+    Exito := False;
+    // Iterar hacia atrás al eliminar elementos de una lista
+    for i := ShellListView1.Items.Count - 1 downto 0 do
     begin
-      MenuItemActualizarClick(Sender);
+      if ShellListView1.Items[i].Selected then
+      begin
+        if BorrarElementoSilencioso(ShellListView1.GetPathFromItem(ShellListView1.Items[i])) then
+          Exito := True;
+      end;
     end;
+
+    if Exito then MenuItemActualizarClick(Sender);
   end;
 end;
 
@@ -151,7 +164,6 @@ procedure TForm1.MenuItem3Click(Sender: TObject);
 var
   NuevaRuta: string;
 begin
-  // Asumimos que se crea dentro del directorio actual mostrado
   if CrearCarpeta(ShellListView1.Root, NuevaRuta) then
   begin
     RefrescarVistas(ShellListView1, ShellTreeView1);
@@ -160,22 +172,36 @@ begin
 end;
 
 procedure TForm1.MenuItem4Click(Sender: TObject);
+var
+  i: Integer;
+  RutasSeleccionadas: TStringList;
 begin
-  if Assigned(ShellListView1.Selected) then
+  if ShellListView1.SelCount > 0 then
   begin
-    if IniciarCopia(ShellListView1.GetPathFromItem(ShellListView1.Selected)) then
-      StatusBar1.SimpleText := 'Copiado: ' + ExtractFileName(RutaPortapapeles);
+    RutasSeleccionadas := TStringList.Create;
+    try
+      for i := 0 to ShellListView1.Items.Count - 1 do
+      begin
+        if ShellListView1.Items[i].Selected then
+          RutasSeleccionadas.Add(ShellListView1.GetPathFromItem(ShellListView1.Items[i]));
+      end;
+      IniciarCopia(RutasSeleccionadas);
+      if Assigned(StatusBar1) then
+        StatusBar1.SimpleText := 'Copiados ' + IntToStr(RutasSeleccionadas.Count) + ' elementos.';
+    finally
+      RutasSeleccionadas.Free;
+    end;
   end;
 end;
 
 procedure TForm1.MenuItem5Click(Sender: TObject);
 begin
-  // Pegamos en la ruta actual que muestra el ListView
   if EjecutarPegado(ShellListView1.Root) then
   begin
     RefrescarVistas(ShellListView1, ShellTreeView1);
     ActualizarEstado;
-    StatusBar1.SimpleText := 'Elemento pegado con éxito.';
+    if Assigned(StatusBar1) then
+      StatusBar1.SimpleText := 'Pegado completado con éxito.';
   end;
 end;
 
@@ -188,35 +214,79 @@ begin
     RutaSeleccionada := ShellListView1.GetPathFromItem(ShellListView1.Selected);
 
     if EsDirectorio(RutaSeleccionada) then
-    begin
-      // Si es directorio, entramos en él
-      CambiarRuta(RutaSeleccionada);
-    end
+      CambiarRuta(RutaSeleccionada)
     else
-    begin
-      // Si es archivo, usamos la lógica de apertura
       AbrirElemento(RutaSeleccionada);
-    end;
   end;
 end;
 
 procedure TForm1.MenuItem1Click(Sender: TObject);
-var ViejaRuta, NuevaRuta: string;
+var
+  ViejaRuta, NuevaRuta: string;
 begin
-  if Assigned(ShellListView1.Selected) then
+  if ShellListView1.SelCount = 1 then
   begin
     ViejaRuta := ShellListView1.GetPathFromItem(ShellListView1.Selected);
     if RenombrarElemento(ViejaRuta, NuevaRuta) then
     begin
       MenuItemActualizarClick(Sender);
     end;
-  end;
+  end
+  else if ShellListView1.SelCount > 1 then
+    ShowMessage('Por favor, selecciona solo un elemento para renombrar.');
 end;
 
 procedure TForm1.ShellListView1Click(Sender: TObject);
 begin
   if Assigned(ShellListView1.Selected) and Assigned(StatusBar1) then
     StatusBar1.SimpleText := 'Seleccionado: ' + ShellListView1.Selected.Caption;
+end;
+
+// Eventos para el Drag and Drop
+procedure TForm1.ShellTreeView1DragOver(Sender, Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
+begin
+  Accept := (Source is TShellListView);
+end;
+
+procedure TForm1.ShellTreeView1DragDrop(Sender, Source: TObject; X, Y: Integer);
+var
+  NodoDestino: TTreeNode;
+  RutaDestino: string;
+  i: Integer;
+  ListaArrastrada: TStringList;
+begin
+  if Source is TShellListView then
+  begin
+    NodoDestino := ShellTreeView1.GetNodeAt(X, Y);
+    if Assigned(NodoDestino) then
+    begin
+      RutaDestino := ShellTreeView1.GetPathFromNode(NodoDestino);
+
+      if EsDirectorio(RutaDestino) then
+      begin
+        ListaArrastrada := TStringList.Create;
+        try
+          for i := 0 to ShellListView1.Items.Count - 1 do
+          begin
+            if ShellListView1.Items[i].Selected then
+              ListaArrastrada.Add(ShellListView1.GetPathFromItem(ShellListView1.Items[i]));
+          end;
+
+          IniciarCopia(ListaArrastrada);
+          EjecutarPegado(RutaDestino);
+
+          // Limpiamos el portapapeles tras soltar
+          RutasPortapapeles.Clear;
+
+          RefrescarVistas(ShellListView1, ShellTreeView1);
+          if Assigned(StatusBar1) then
+            StatusBar1.SimpleText := 'Archivos copiados a ' + ExtractFileName(RutaDestino);
+        finally
+          ListaArrastrada.Free;
+        end;
+      end;
+    end;
+  end;
 end;
 
 end.
