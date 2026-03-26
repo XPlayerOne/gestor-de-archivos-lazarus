@@ -35,7 +35,13 @@ begin
   else if FileExists(Ruta) then
   begin
     if not OpenDocument(Ruta) then
+    begin
+      {$IFDEF UNIX}
+      ShowMessage('Error: No se pudo abrir el archivo. Verifica que "xdg-open" u otra herramienta por defecto esté instalada.');
+      {$ELSE}
       ShowMessage('No se encontró una aplicación asociada para abrir este archivo.');
+      {$ENDIF}
+    end;
   end;
 end;
 
@@ -81,8 +87,9 @@ var
   Ruta, NombreDestino: string;
   i: Integer;
 begin
-  Result := True;
+  Result := False;
   if (not Assigned(RutasPortapapeles)) or (RutasPortapapeles.Count = 0) then Exit;
+  Result := True;
 
   for i := 0 to RutasPortapapeles.Count - 1 do
   begin
@@ -159,9 +166,13 @@ begin
   if Assigned(AListView) then
   begin
     RutaActual := AListView.Root;
-    AListView.Root := '';
-    Application.ProcessMessages;
-    AListView.Root := RutaActual;
+    AListView.Items.BeginUpdate;
+    try
+      AListView.Root := ''; 
+      AListView.Root := RutaActual;
+    finally
+      AListView.Items.EndUpdate;
+    end;
   end;
 
   if Assigned(ATreeView) then
