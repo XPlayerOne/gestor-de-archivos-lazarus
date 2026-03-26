@@ -47,15 +47,18 @@ Para eliminar el parpadeo visual (*flickering*) durante la recarga de directorio
 4.  Se invoca `AListView.Items.EndUpdate`, forzando un único repintado de la lista en el hilo principal de la GUI.
 
 ### Abstracción Multiplataforma (OS Bridge)
-El software detecta el kernel en tiempo de compilación para ajustar su comportamiento:
+El software detecta el kernel en tiempo de compilación para ajustar su comportamiento mediante directivas `{$IFDEF UNIX}`:
 *   **En UNIX (Linux/macOS)**: 
-    *   Mapea el root a `/`.
-    *   Inyecta sugerencias de `chmod`/`chown` en las excepciones de borrado.
-    *   Utiliza `GetUserDir` para localizar el punto de montaje del `HOME`.
+    *   **Gestión de Iconos Dinámica**: Implementa un motor de búsqueda de temas de iconos (`Mint-Y`, `Adwaita`, `Papirus`, `GNOME`) que rastrea `/usr/share/icons/` en tiempo de ejecución para poblar un `TImageList` dinámico.
+    *   **Estabilización de UI**: Forzado de `ViewStyle := vsReport` para evitar errores de renderizado en el motor GTK2/3 y ajuste de colores a `clDefault` para compatibilidad con temas oscuros (Dark Mode).
+    *   Mapea el root a `/` y utiliza `GetUserDir` para el `HOME`.
 *   **En Windows**: 
-    *   Permite que el sistema Shell maneje las letras de unidad lógicas automáticamente mediante strings vacíos en `Root`.
+    *   Mantiene el modo `vsIcon` nativo.
+    *   Delega la gestión de iconos al System Shell Image List de Windows de forma automática.
+    *   Permite que el sistema Shell maneje las letras de unidad lógicas mediante strings vacíos en `Root`.
 
 ## 4. Gestión de Errores y Excepciones
+*   **Carga de Recursos Fallida**: El motor de iconos utiliza un bloque `try...finally` con `TPicture` y verificaciones `FileExists`. Si un icono de sistema no se encuentra, el sistema falla de forma segura (*graceful degradation*), permitiendo la navegación sin iconos pero manteniendo la estructura funcional.
 *   **Borrado Atómico**: El sistema de eliminación recorre los elementos en orden inverso (`downto`) para evitar desbordamientos de índice al modificar la lista mientras se itera.
 *   **Reporte de Fallos**: Implementa un contador de errores en operaciones por lotes. Si una operación de borrado de 10 elementos falla en 2, el usuario recibe un resumen preciso en lugar de una falla silenciosa.
 

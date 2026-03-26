@@ -48,6 +48,10 @@ type
     ListaAtras: TStringList;
     ListaAdelante: TStringList;
     NavegandoHistorial: Boolean;
+    {$IFDEF UNIX}
+    IconosSistema: TImageList;
+    procedure ConfigurarIconosLinux;
+    {$ENDIF}
     procedure ActualizarEstado;
     procedure CambiarRuta(const NuevaRuta: string; AgregarAlHistorial: Boolean = True);
   public
@@ -59,6 +63,70 @@ var
 implementation
 
 {$R *.lfm}
+
+{$IFDEF UNIX}
+procedure TForm1.ConfigurarIconosLinux;
+  function BuscarIcono(const Nombre: string; EsCarpeta: Boolean): string;
+  var
+    Temas: array[0..5] of string;
+    Categorias: array[0..1] of string;
+    i, j: Integer;
+    RutaBase: string;
+  begin
+    Result := '';
+    // Lista de temas comunes en Mint, Arch, Ubuntu, etc.
+    Temas[0] := 'Mint-Y'; Temas[1] := 'Adwaita'; Temas[2] := 'hicolor';
+    Temas[3] := 'Papirus'; Temas[4] := 'gnome'; Temas[5] := 'breeze';
+    
+    if EsCarpeta then
+    begin
+      Categorias[0] := 'places'; Categorias[1] := 'apps';
+    end
+    else
+    begin
+      Categorias[0] := 'mimetypes'; Categorias[1] := 'mimetypes';
+    end;
+
+    for i := 0 to High(Temas) do
+      for j := 0 to High(Categorias) do
+      begin
+        RutaBase := '/usr/share/icons/' + Temas[i] + '/16x16/' + Categorias[j] + '/' + Nombre + '.png';
+        if FileExists(RutaBase) then Exit(RutaBase);
+      end;
+  end;
+var
+  Ruta: string;
+  Pic: TPicture;
+begin
+  IconosSistema := TImageList.Create(Self);
+  IconosSistema.Width := 16;
+  IconosSistema.Height := 16;
+
+  Pic := TPicture.Create;
+  try
+    // Icono de carpeta
+    Ruta := BuscarIcono('folder', True);
+    if (Ruta <> '') and FileExists(Ruta) then
+    begin
+      Pic.LoadFromFile(Ruta);
+      IconosSistema.Add(Pic.Bitmap, nil);
+    end;
+    
+    // Icono de archivo
+    Ruta := BuscarIcono('text-x-generic', False);
+    if (Ruta <> '') and FileExists(Ruta) then
+    begin
+      Pic.LoadFromFile(Ruta);
+      IconosSistema.Add(Pic.Bitmap, nil);
+    end;
+  finally
+    Pic.Free;
+  end;
+
+  ShellListView1.SmallImages := IconosSistema;
+  ShellTreeView1.Images := IconosSistema;
+end;
+{$ENDIF}
 
 type
   // Truco para acceder a propiedades protegidas si no son publicas en esta version
@@ -77,12 +145,19 @@ begin
   TTreeCracker(ShellTreeView1).OnDragOver := @ShellTreeView1DragOver;
 
   {$IFDEF UNIX}
+  ConfigurarIconosLinux;
   ShellTreeView1.Root := '/';
   ShellListView1.Root := GetUserDir;
+  // En Linux, vsReport es mucho más estable para ShellListView
+  // y evita el problema de visualización "roto" en modo vsIcon
+  ShellListView1.ViewStyle := vsReport;
+  // Corregimos colores que pueden verse mal en ciertos temas de Linux
+  ShellTreeView1.Color := clDefault;
+  ShellTreeView1.BackgroundColor := clDefault;
   {$ELSE}
   ShellTreeView1.Root := '';
-  {$ENDIF}
   ShellListView1.ViewStyle := vsIcon;
+  {$ENDIF}
 
   // Habilitamos selección múltiple y arrastrar/soltar por código
   ShellListView1.MultiSelect := True;

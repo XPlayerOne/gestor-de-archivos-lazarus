@@ -1,17 +1,17 @@
 object Form1: TForm1
   Left = 463
-  Height = 503
+  Height = 422
   Top = 152
-  Width = 633
+  Width = 879
   Caption = 'Gestor de Archivos'
-  ClientHeight = 503
-  ClientWidth = 633
+  ClientHeight = 422
+  ClientWidth = 879
   LCLVersion = '4.6.0.0'
   OnCreate = FormCreate
   object ShellTreeView1: TShellTreeView
     Left = 0
-    Height = 459
-    Top = 26
+    Height = 348
+    Top = 52
     Width = 216
     Align = alLeft
     AutoExpand = True
@@ -26,9 +26,9 @@ object Form1: TForm1
   end
   object ShellListView1: TShellListView
     Left = 216
-    Height = 459
-    Top = 26
-    Width = 417
+    Height = 348
+    Top = 52
+    Width = 663
     Align = alClient
     Color = clDefault
     DragMode = dmAutomatic
@@ -47,7 +47,7 @@ object Form1: TForm1
     Left = 0
     Height = 30
     Top = 0
-    Width = 633
+    Width = 879
     ButtonHeight = 28
     ButtonWidth = 80
     Caption = 'ToolBar1'
@@ -57,65 +57,64 @@ object Form1: TForm1
     TabOrder = 2
     object btnAtras: TToolButton
       Left = 1
-      Top = 2
+      Top = 0
       Caption = '◀ Atrás'
       OnClick = btnAtrasClick
     end
     object btnAdelante: TToolButton
       Left = 81
-      Top = 2
+      Top = 0
       Caption = 'Adelante ▶'
       OnClick = btnAdelanteClick
     end
     object btnSeparador1: TToolButton
       Left = 161
-      Top = 2
-      Width = 10
+      Height = 28
+      Top = 0
       Caption = 'btnSeparador1'
       Style = tbsSeparator
     end
     object btnSubir: TToolButton
-      Left = 171
-      Top = 2
+      Left = 169
+      Top = 0
       Caption = '▲ Subir'
       OnClick = ToolButton1Click
     end
     object btnSeparador2: TToolButton
-      Left = 251
-      Top = 2
-      Width = 10
+      Left = 249
+      Height = 28
+      Top = 0
       Caption = 'btnSeparador2'
       Style = tbsSeparator
     end
     object btnHome: TToolButton
-      Left = 261
-      Top = 2
+      Left = 257
+      Top = 0
       Caption = '🏠 Inicio'
       OnClick = btnHomeClick
     end
     object btnRefrescar: TToolButton
-      Left = 341
-      Top = 2
+      Left = 337
+      Top = 0
       Caption = '🔄 Refrescar'
       OnClick = MenuItemActualizarClick
     end
   end
   object EditRuta: TEdit
     Left = 0
-    Height = 23
-    Top = 26
-    Width = 633
+    Height = 22
+    Top = 30
+    Width = 879
     Align = alTop
-    OnKeyDown = EditRutaKeyDown
     TabOrder = 3
+    OnKeyDown = EditRutaKeyDown
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Height = 18
-    Top = 485
-    Width = 633
+    Height = 22
+    Top = 400
+    Width = 879
     Panels = <>
-    SimplePanel = True
   end
   object PopupMenu1: TPopupMenu
     Left = 342

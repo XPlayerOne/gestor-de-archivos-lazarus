@@ -12,7 +12,6 @@ type
   { TForm1 }
   TForm1 = class(TForm)
     EditRuta: TEdit;
-    ImageList1: TImageList;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
@@ -38,13 +37,23 @@ type
     procedure ShellListView1Click(Sender: TObject);
     procedure ShellListView1DblClick(Sender: TObject);
     procedure ShellListView1KeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
-    procedure ShellTreeView1Click(Sender: TObject);
+    procedure ShellTreeView1Change(Sender: TObject; Node: TTreeNode);
     procedure ShellTreeView1DragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure ShellTreeView1DragOver(Sender, Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
     procedure ToolButton1Click(Sender: TObject);
+    procedure btnAdelanteClick(Sender: TObject);
+    procedure btnAtrasClick(Sender: TObject);
+    procedure btnHomeClick(Sender: TObject);
   private
+    ListaAtras: TStringList;
+    ListaAdelante: TStringList;
+    NavegandoHistorial: Boolean;
+    {$IFDEF UNIX}
+    IconosSistema: TImageList;
+    procedure ConfigurarIconosLinux;
+    {$ENDIF}
     procedure ActualizarEstado;
-    procedure CambiarRuta(const NuevaRuta: string);
+    procedure CambiarRuta(const NuevaRuta: string; AgregarAlHistorial: Boolean = True);
   public
   end;
 
@@ -55,12 +64,58 @@ implementation
 
 {$R *.lfm}
 
+{$IFDEF UNIX}
+procedure TForm1.ConfigurarIconosLinux;
+begin
+  // Creamos la lista de iconos solo para Linux
+  IconosSistema := TImageList.Create(Self);
+  IconosSistema.Width := 16;
+  IconosSistema.Height := 16;
+
+  // Intentamos cargar iconos de carpetas y archivos desde rutas comunes de Linux
+  // Si no existen en tu distro, el ImageList quedará vacío pero vinculado, 
+  // lo que ayuda a que el ShellListView se dibuje correctamente.
+  if FileExists('/usr/share/icons/hicolor/16x16/places/folder.png') then
+    IconosSistema.AddPixelsFromFile('/usr/share/icons/hicolor/16x16/places/folder.png');
+    
+  if FileExists('/usr/share/icons/hicolor/16x16/mimetypes/text-x-generic.png') then
+    IconosSistema.AddPixelsFromFile('/usr/share/icons/hicolor/16x16/mimetypes/text-x-generic.png');
+
+  ShellListView1.SmallImages := IconosSistema;
+  ShellTreeView1.Images := IconosSistema;
+end;
+{$ENDIF}
+
+type
+  // Truco para acceder a propiedades protegidas si no son publicas en esta version
+  TTreeCracker = class(TShellTreeView);
+
 { TForm1 }
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
+  ListaAtras := TStringList.Create;
+  ListaAdelante := TStringList.Create;
+  NavegandoHistorial := False;
+
+  // Asignamos los eventos de Drag & Drop por código para evitar errores en el LFM
+  TTreeCracker(ShellTreeView1).OnDragDrop := @ShellTreeView1DragDrop;
+  TTreeCracker(ShellTreeView1).OnDragOver := @ShellTreeView1DragOver;
+
+  {$IFDEF UNIX}
+  ConfigurarIconosLinux; // Solo se ejecuta en Linux
+  ShellTreeView1.Root := '/';
+  ShellListView1.Root := GetUserDir;
+  // En Linux, vsReport es mucho más estable para ShellListView
+  // y evita el problema de visualización "roto" en modo vsIcon
+  ShellListView1.ViewStyle := vsReport;
+  // Corregimos colores que pueden verse mal en ciertos temas de Linux
+  ShellTreeView1.Color := clDefault;
+  ShellTreeView1.BackgroundColor := clDefault;
+  {$ELSE}
   ShellTreeView1.Root := '';
   ShellListView1.ViewStyle := vsIcon;
+  {$ENDIF}
 
   // Habilitamos selección múltiple y arrastrar/soltar por código
   ShellListView1.MultiSelect := True;
@@ -70,10 +125,20 @@ begin
   ActualizarEstado;
 end;
 
-procedure TForm1.CambiarRuta(const NuevaRuta: string);
+procedure TForm1.CambiarRuta(const NuevaRuta: string; AgregarAlHistorial: Boolean = True);
+var
+  RutaAnterior: string;
 begin
   if EsDirectorio(NuevaRuta) then
   begin
+    RutaAnterior := ShellListView1.Root;
+
+    if AgregarAlHistorial and (RutaAnterior <> '') and (RutaAnterior <> NuevaRuta) then
+    begin
+      ListaAtras.Add(RutaAnterior);
+      ListaAdelante.Clear; // Al navegar a una ruta nueva, se limpia el "adelante"
+    end;
+
     ShellListView1.Root := NuevaRuta;
     ShellTreeView1.Path := NuevaRuta;
     ActualizarEstado;
@@ -106,10 +171,43 @@ begin
   ActualizarEstado;
 end;
 
-procedure TForm1.ShellTreeView1Click(Sender: TObject);
+procedure TForm1.ShellTreeView1Change(Sender: TObject; Node: TTreeNode);
 begin
-  ShellListView1.Root := ShellTreeView1.Path;
+  // Al cambiar en el árbol, el ShellListView se actualiza automáticamente
+  // por la propiedad ShellListView vinculada, pero forzamos el refresco
+  // de los datos de la interfaz (Edit e Items.Count)
   ActualizarEstado;
+end;
+
+procedure TForm1.btnAtrasClick(Sender: TObject);
+var
+  Ruta: string;
+begin
+  if ListaAtras.Count > 0 then
+  begin
+    Ruta := ListaAtras[ListaAtras.Count - 1];
+    ListaAtras.Delete(ListaAtras.Count - 1);
+    ListaAdelante.Add(ShellListView1.Root);
+    CambiarRuta(Ruta, False);
+  end;
+end;
+
+procedure TForm1.btnAdelanteClick(Sender: TObject);
+var
+  Ruta: string;
+begin
+  if ListaAdelante.Count > 0 then
+  begin
+    Ruta := ListaAdelante[ListaAdelante.Count - 1];
+    ListaAdelante.Delete(ListaAdelante.Count - 1);
+    ListaAtras.Add(ShellListView1.Root);
+    CambiarRuta(Ruta, False);
+  end;
+end;
+
+procedure TForm1.btnHomeClick(Sender: TObject);
+begin
+  CambiarRuta(GetUserDir);
 end;
 
 procedure TForm1.ToolButton1Click(Sender: TObject);
@@ -117,6 +215,9 @@ var
   RutaActual, RutaPadre: string;
 begin
   RutaActual := ShellListView1.Root;
+  {$IFDEF UNIX}
+  if RutaActual = '/' then Exit;
+  {$ENDIF}
   RutaPadre := ExtractFileDir(ExcludeTrailingPathDelimiter(RutaActual));
 
   if (RutaPadre <> '') and (RutaPadre <> RutaActual) then
@@ -140,20 +241,45 @@ procedure TForm1.MenuItem2Click(Sender: TObject);
 var
   i: Integer;
   Exito: Boolean;
+  Fallos, Exitos: Integer;
+  Mensaje: string;
 begin
   if ShellListView1.SelCount = 0 then Exit;
 
-  if MessageDlg('Eliminar', '¿Estás seguro de eliminar los ' + IntToStr(ShellListView1.SelCount) + ' elementos seleccionados?', mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+  if ShellListView1.SelCount = 1 then
+    Mensaje := '¿Estás seguro de eliminar el elemento seleccionado?'
+  else
+    Mensaje := '¿Estás seguro de eliminar los ' + IntToStr(ShellListView1.SelCount) + ' elementos seleccionados?';
+
+  if MessageDlg('Eliminar', Mensaje, mtConfirmation, [mbYes, mbNo], 0) = mrYes then
   begin
     Exito := False;
+    Fallos := 0;
+    Exitos := 0;
     // Iterar hacia atrás al eliminar elementos de una lista
     for i := ShellListView1.Items.Count - 1 downto 0 do
     begin
       if ShellListView1.Items[i].Selected then
       begin
         if BorrarElementoSilencioso(ShellListView1.GetPathFromItem(ShellListView1.Items[i])) then
+        begin
           Exito := True;
+          Inc(Exitos);
+        end
+        else
+        begin
+          Inc(Fallos);
+        end;
       end;
+    end;
+
+    if Fallos > 0 then
+    begin
+      Mensaje := 'Falló la eliminación de ' + IntToStr(Fallos) + ' elemento(s).';
+      {$IFDEF UNIX}
+      Mensaje := Mensaje + ' Verifica que tengas permisos suficientes. Sugerencia: Revisa los permisos usando chmod o chown.';
+      {$ENDIF}
+      ShowMessage(Mensaje);
     end;
 
     if Exito then MenuItemActualizarClick(Sender);

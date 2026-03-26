@@ -18,10 +18,13 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Unit1"/>
+        <IsVisibleTab Value="True"/>
         <TopLine Value="121"/>
-        <CursorPos Y="144"/>
+        <CursorPos X="11" Y="136"/>
+        <ComponentState Value="2"/>
         <UsageCount Value="46"/>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="../../tmp/project1.lpr"/>
@@ -47,10 +50,9 @@
       </Unit>
       <Unit>
         <Filename Value="ULogica.pas"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
         <TopLine Value="123"/>
-        <CursorPos X="59" Y="144"/>
+        <CursorPos X="41" Y="124"/>
         <UsageCount Value="20"/>
         <Loaded Value="True"/>
       </Unit>

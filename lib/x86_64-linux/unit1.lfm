@@ -1,39 +1,37 @@
 object Form1: TForm1
   Left = 463
-  Height = 503
+  Height = 422
   Top = 152
-  Width = 633
+  Width = 879
   Caption = 'Gestor de Archivos'
-  ClientHeight = 503
-  ClientWidth = 633
+  ClientHeight = 422
+  ClientWidth = 879
   LCLVersion = '4.6.0.0'
   OnCreate = FormCreate
   object ShellTreeView1: TShellTreeView
     Left = 0
-    Height = 459
-    Top = 26
+    Height = 348
+    Top = 52
     Width = 216
     Align = alLeft
     AutoExpand = True
     BackgroundColor = clInactiveCaption
     Color = clInactiveCaption
-    Images = ImageList1
     PopupMenu = PopupMenu1
     ShowLines = False
-    StateImages = ImageList1
     TabOrder = 0
     Options = [tvoAutoExpand, tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowRoot, tvoToolTips, tvoThemedDraw]
     ShellListView = ShellListView1
+    OnChange = ShellTreeView1Change
   end
   object ShellListView1: TShellListView
     Left = 216
-    Height = 459
-    Top = 26
-    Width = 417
+    Height = 348
+    Top = 52
+    Width = 663
     Align = alClient
     Color = clDefault
     DragMode = dmAutomatic
-    LargeImages = ImageList1
     ParentShowHint = False
     PopupMenu = PopupMenu1
     ShowHint = True
@@ -42,33 +40,81 @@ object Form1: TForm1
     ViewStyle = vsIcon
     ObjectTypes = [otFolders, otNonFolders]
     ShellTreeView = ShellTreeView1
+    OnClick = ShellListView1Click
     OnDblClick = ShellListView1DblClick
-    OnDragDrop = ShellTreeView1DragDrop
-    OnDragOver = ShellTreeView1DragOver
   end
   object ToolBar1: TToolBar
     Left = 0
-    Height = 26
+    Height = 30
     Top = 0
-    Width = 633
+    Width = 879
+    ButtonHeight = 28
+    ButtonWidth = 80
     Caption = 'ToolBar1'
+    EdgeBorders = [ebBottom]
+    List = True
+    ShowCaptions = True
     TabOrder = 2
-    object ToolButton1: TToolButton
-      Cursor = crHandPoint
+    object btnAtras: TToolButton
       Left = 1
-      Top = 2
-      Caption = 'Atras'
-      ParentShowHint = False
+      Top = 0
+      Caption = '◀ Atrás'
+      OnClick = btnAtrasClick
+    end
+    object btnAdelante: TToolButton
+      Left = 81
+      Top = 0
+      Caption = 'Adelante ▶'
+      OnClick = btnAdelanteClick
+    end
+    object btnSeparador1: TToolButton
+      Left = 161
+      Height = 28
+      Top = 0
+      Caption = 'btnSeparador1'
+      Style = tbsSeparator
+    end
+    object btnSubir: TToolButton
+      Left = 169
+      Top = 0
+      Caption = '▲ Subir'
       OnClick = ToolButton1Click
     end
+    object btnSeparador2: TToolButton
+      Left = 249
+      Height = 28
+      Top = 0
+      Caption = 'btnSeparador2'
+      Style = tbsSeparator
+    end
+    object btnHome: TToolButton
+      Left = 257
+      Top = 0
+      Caption = '🏠 Inicio'
+      OnClick = btnHomeClick
+    end
+    object btnRefrescar: TToolButton
+      Left = 337
+      Top = 0
+      Caption = '🔄 Refrescar'
+      OnClick = MenuItemActualizarClick
+    end
+  end
+  object EditRuta: TEdit
+    Left = 0
+    Height = 22
+    Top = 30
+    Width = 879
+    Align = alTop
+    TabOrder = 3
+    OnKeyDown = EditRutaKeyDown
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Height = 18
-    Top = 485
-    Width = 633
+    Height = 22
+    Top = 400
+    Width = 879
     Panels = <>
-    SimplePanel = False
   end
   object PopupMenu1: TPopupMenu
     Left = 342
@@ -101,18 +147,5 @@ object Form1: TForm1
       Caption = 'Crear Carpeta'
       OnClick = MenuItem3Click
     end
-  end
-  object ImageList1: TImageList
-    Left = 290
-    Top = 122
-    Bitmap = {
-      4C7A010000001000000010000000BB0000000000000078DA7BFEFC79C3BD4B07
-      67DD38BA62CD8DA3CB5701F14A10BE7962DDA2E7CF9F353F07CA43713D1A068B
-      83F4EE6AD4FABFB34113031F9911FAECC1F553135EBC7881A11F2406C2207BF7
-      F4BAFDDD373DEA371C4F43C2D3B1E343B3135E3EBE7BB5EBDEC169FBAF2E4BFC
-      4D06FE75F7E0B45DB7675BFDBA3DC3E43F39F8CE6CEBBFE4EA1DC5C303DF9A6E
-      4C91DED3D3DCDF5F9860F09F1C7C7A9ADBDB27F7AEF503F3D04A68DE05E1D548
-      78150EF1D5203D8FEF5DED01005B5FB84A
-    }
   end
 end
