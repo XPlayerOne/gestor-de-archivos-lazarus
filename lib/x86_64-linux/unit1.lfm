@@ -1,5 +1,5 @@
 object Form1: TForm1
-  Left = 463
+  Left = 401
   Height = 422
   Top = 152
   Width = 879
@@ -10,8 +10,8 @@ object Form1: TForm1
   OnCreate = FormCreate
   object ShellTreeView1: TShellTreeView
     Left = 0
-    Height = 348
-    Top = 52
+    Height = 346
+    Top = 58
     Width = 216
     Align = alLeft
     AutoExpand = True
@@ -26,8 +26,8 @@ object Form1: TForm1
   end
   object ShellListView1: TShellListView
     Left = 216
-    Height = 348
-    Top = 52
+    Height = 346
+    Top = 58
     Width = 663
     Align = alClient
     Color = clDefault
@@ -102,7 +102,7 @@ object Form1: TForm1
   end
   object EditRuta: TEdit
     Left = 0
-    Height = 22
+    Height = 28
     Top = 30
     Width = 879
     Align = alTop
@@ -111,41 +111,49 @@ object Form1: TForm1
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Height = 22
-    Top = 400
+    Height = 18
+    Top = 404
     Width = 879
     Panels = <>
   end
   object PopupMenu1: TPopupMenu
     Left = 342
     Top = 223
-    object MenuItem6: TMenuItem
+    object MenuItemAbrir: TMenuItem
       Caption = 'Abrir'
-      OnClick = MenuItem6Click
+      OnClick = MenuItemAbrirClick
     end
     object MenuItemActualizar: TMenuItem
       Caption = 'Actualizar'
       OnClick = MenuItemActualizarClick
     end
-    object MenuItem1: TMenuItem
+    object MenuItemRenombrar: TMenuItem
       Caption = 'Renombrar'
-      OnClick = MenuItem1Click
+      OnClick = MenuItemRenombrarClick
     end
-    object MenuItem4: TMenuItem
+    object MenuItemCopiar: TMenuItem
       Caption = 'Copiar'
-      OnClick = MenuItem4Click
+      OnClick = MenuItemCopiarClick
     end
-    object MenuItem5: TMenuItem
+    object MenuItemCortar: TMenuItem
+      Caption = 'Cortar'
+      OnClick = MenuItemCortarClick
+    end
+    object MenuItemPegar: TMenuItem
       Caption = 'Pegar'
-      OnClick = MenuItem5Click
+      OnClick = MenuItemPegarClick
     end
-    object MenuItem2: TMenuItem
+    object MenuItemEliminar: TMenuItem
       Caption = 'Eliminar'
-      OnClick = MenuItem2Click
+      OnClick = MenuItemEliminarClick
     end
-    object MenuItem3: TMenuItem
+    object MenuItemBorrar: TMenuItem
+      Caption = 'Borrar'
+      OnClick = MenuItemBorrarClick
+    end
+    object MenuItemCrearCarpeta: TMenuItem
       Caption = 'Crear Carpeta'
-      OnClick = MenuItem3Click
+      OnClick = MenuItemCrearCarpetaClick
     end
   end
 end
