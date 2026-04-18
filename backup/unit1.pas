@@ -11,13 +11,22 @@ uses
 type
   { TForm1 }
   TForm1 = class(TForm)
+    btnAdelante: TToolButton;
+    btnAtras: TToolButton;
+    btnHome: TToolButton;
+    btnRefrescar: TToolButton;
+    btnSeparador1: TToolButton;
+    btnSeparador2: TToolButton;
+    btnSubir: TToolButton;
     EditRuta: TEdit;
-    MenuItem1: TMenuItem;
-    MenuItem2: TMenuItem;
-    MenuItem3: TMenuItem;
-    MenuItem4: TMenuItem;
-    MenuItem5: TMenuItem;
-    MenuItem6: TMenuItem;
+    MenuItemBorrar: TMenuItem;
+    MenuItemRenombrar: TMenuItem;
+    MenuItemEliminar: TMenuItem;
+    MenuItemCrearCarpeta: TMenuItem;
+    MenuItemCopiar: TMenuItem;
+    MenuItemPegar: TMenuItem;
+    MenuItemAbrir: TMenuItem;
+    MenuItemCortar: TMenuItem;
     MenuItemActualizar: TMenuItem;
     PopupMenu1: TPopupMenu;
     ShellListView1: TShellListView;
@@ -27,12 +36,14 @@ type
     ToolButton1: TToolButton;
     procedure FormCreate(Sender: TObject);
     procedure EditRutaKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
-    procedure MenuItem1Click(Sender: TObject);
-    procedure MenuItem2Click(Sender: TObject);
-    procedure MenuItem3Click(Sender: TObject);
-    procedure MenuItem4Click(Sender: TObject);
-    procedure MenuItem5Click(Sender: TObject);
-    procedure MenuItem6Click(Sender: TObject);
+    procedure MenuItemBorrarClick(Sender: TObject);
+    procedure MenuItemRenombrarClick(Sender: TObject);
+    procedure MenuItemEliminarClick(Sender: TObject);
+    procedure MenuItemCrearCarpetaClick(Sender: TObject);
+    procedure MenuItemCopiarClick(Sender: TObject);
+    procedure MenuItemPegarClick(Sender: TObject);
+    procedure MenuItemAbrirClick(Sender: TObject);
+    procedure MenuItemCortarClick(Sender: TObject);
     procedure MenuItemActualizarClick(Sender: TObject);
     procedure ShellListView1Click(Sender: TObject);
     procedure ShellListView1DblClick(Sender: TObject);
@@ -66,20 +77,62 @@ implementation
 
 {$IFDEF UNIX}
 procedure TForm1.ConfigurarIconosLinux;
+  function BuscarIcono(const Nombre: string; EsCarpeta: Boolean): string;
+  var
+    Temas: array[0..5] of string;
+    Categorias: array[0..1] of string;
+    i, j: Integer;
+    RutaBase: string;
+  begin
+    Result := '';
+    // Lista de temas comunes en Mint, Arch, Ubuntu, etc.
+    Temas[0] := 'Mint-Y'; Temas[1] := 'Adwaita'; Temas[2] := 'hicolor';
+    Temas[3] := 'Papirus'; Temas[4] := 'gnome'; Temas[5] := 'breeze';
+    
+    if EsCarpeta then
+    begin
+      Categorias[0] := 'places'; Categorias[1] := 'apps';
+    end
+    else
+    begin
+      Categorias[0] := 'mimetypes'; Categorias[1] := 'mimetypes';
+    end;
+
+    for i := 0 to High(Temas) do
+      for j := 0 to High(Categorias) do
+      begin
+        RutaBase := '/usr/share/icons/' + Temas[i] + '/16x16/' + Categorias[j] + '/' + Nombre + '.png';
+        if FileExists(RutaBase) then Exit(RutaBase);
+      end;
+  end;
+var
+  Ruta: string;
+  Pic: TPicture;
 begin
-  // Creamos la lista de iconos solo para Linux
   IconosSistema := TImageList.Create(Self);
   IconosSistema.Width := 16;
   IconosSistema.Height := 16;
 
-  // Intentamos cargar iconos de carpetas y archivos desde rutas comunes de Linux
-  // Si no existen en tu distro, el ImageList quedará vacío pero vinculado, 
-  // lo que ayuda a que el ShellListView se dibuje correctamente.
-  if FileExists('/usr/share/icons/hicolor/16x16/places/folder.png') then
-    IconosSistema.AddPixelsFromFile('/usr/share/icons/hicolor/16x16/places/folder.png');
+  Pic := TPicture.Create;
+  try
+    // Icono de carpeta
+    Ruta := BuscarIcono('folder', True);
+    if (Ruta <> '') and FileExists(Ruta) then
+    begin
+      Pic.LoadFromFile(Ruta);
+      IconosSistema.Add(Pic.Bitmap, nil);
+    end;
     
-  if FileExists('/usr/share/icons/hicolor/16x16/mimetypes/text-x-generic.png') then
-    IconosSistema.AddPixelsFromFile('/usr/share/icons/hicolor/16x16/mimetypes/text-x-generic.png');
+    // Icono de archivo
+    Ruta := BuscarIcono('text-x-generic', False);
+    if (Ruta <> '') and FileExists(Ruta) then
+    begin
+      Pic.LoadFromFile(Ruta);
+      IconosSistema.Add(Pic.Bitmap, nil);
+    end;
+  finally
+    Pic.Free;
+  end;
 
   ShellListView1.SmallImages := IconosSistema;
   ShellTreeView1.Images := IconosSistema;
@@ -103,7 +156,7 @@ begin
   TTreeCracker(ShellTreeView1).OnDragOver := @ShellTreeView1DragOver;
 
   {$IFDEF UNIX}
-  ConfigurarIconosLinux; // Solo se ejecuta en Linux
+  ConfigurarIconosLinux;
   ShellTreeView1.Root := '/';
   ShellListView1.Root := GetUserDir;
   // En Linux, vsReport es mucho más estable para ShellListView
@@ -154,6 +207,34 @@ begin
     else
       ShowMessage('La ruta no existe.');
   end;
+end;
+
+procedure TForm1.MenuItemBorrarClick(Sender: TObject);
+var
+  i: Integer;
+  Ruta: string;
+  Exito: Boolean;
+begin
+  if ShellListView1.SelCount = 0 then Exit;
+
+  Exito := True;
+  for i := ShellListView1.Items.Count - 1 downto 0 do
+  begin
+    if ShellListView1.Items[i].Selected then
+    begin
+      Ruta := ShellListView1.GetPathFromItem(ShellListView1.Items[i]);
+      if not EnviarALaPapelera(Ruta) then
+        Exito := False;
+    end;
+  end;
+
+  if Exito then
+  begin
+    MenuItemActualizarClick(Sender);
+    StatusBar1.SimpleText := 'Elementos enviados a la papelera.';
+  end
+  else
+    ShowMessage('Algunos elementos no pudieron enviarse a la papelera.');
 end;
 
 procedure TForm1.ActualizarEstado;
@@ -226,18 +307,18 @@ end;
 
 procedure TForm1.ShellListView1DblClick(Sender: TObject);
 begin
-  MenuItem6Click(Sender);
+  MenuItemActualizarClick(Sender);
 end;
 
 procedure TForm1.ShellListView1KeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
   if Key = VK_RETURN then
   begin
-    MenuItem6Click(Sender);
+    MenuItemActualizarClick(Sender);
   end;
 end;
 
-procedure TForm1.MenuItem2Click(Sender: TObject);
+procedure TForm1.MenuItemEliminarClick(Sender: TObject);
 var
   i: Integer;
   Exito: Boolean;
@@ -286,7 +367,7 @@ begin
   end;
 end;
 
-procedure TForm1.MenuItem3Click(Sender: TObject);
+procedure TForm1.MenuItemCrearCarpetaClick(Sender: TObject);
 var
   NuevaRuta: string;
 begin
@@ -297,7 +378,7 @@ begin
   end;
 end;
 
-procedure TForm1.MenuItem4Click(Sender: TObject);
+procedure TForm1.MenuItemCopiarClick(Sender: TObject);
 var
   i: Integer;
   RutasSeleccionadas: TStringList;
@@ -320,7 +401,7 @@ begin
   end;
 end;
 
-procedure TForm1.MenuItem5Click(Sender: TObject);
+procedure TForm1.MenuItemPegarClick(Sender: TObject);
 begin
   if EjecutarPegado(ShellListView1.Root) then
   begin
@@ -331,7 +412,7 @@ begin
   end;
 end;
 
-procedure TForm1.MenuItem6Click(Sender: TObject);
+procedure TForm1.MenuItemAbrirClick(Sender: TObject);
 var
   RutaSeleccionada: string;
 begin
@@ -346,7 +427,32 @@ begin
   end;
 end;
 
-procedure TForm1.MenuItem1Click(Sender: TObject);
+procedure TForm1.MenuItemCortarClick(Sender: TObject);
+var
+  i: Integer;
+  RutasSeleccionadas: TStringList;
+begin
+  if ShellListView1.SelCount > 0 then
+  begin
+    RutasSeleccionadas := TStringList.Create;
+    try
+      for i := 0 to ShellListView1.Items.Count - 1 do
+      begin
+        if ShellListView1.Items[i].Selected then
+          RutasSeleccionadas.Add(ShellListView1.GetPathFromItem(ShellListView1.Items[i]));
+      end;
+
+     IniciarCorte(RutasSeleccionadas);
+
+      if Assigned(StatusBar1) then
+        StatusBar1.SimpleText := 'Cortados ' + IntToStr(RutasSeleccionadas.Count) + ' elementos.';
+    finally
+      RutasSeleccionadas.Free;
+    end;
+  end;
+end;
+
+procedure TForm1.MenuItemRenombrarClick(Sender: TObject);
 var
   ViejaRuta, NuevaRuta: string;
 begin

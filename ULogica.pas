@@ -5,15 +5,18 @@ unit ULogica;
 interface
 
 uses
-  Classes, SysUtils, Forms, Dialogs, LclIntf, FileUtil, Controls, LCLType, ShellCtrls;
+  Classes, SysUtils, Forms, Dialogs, LclIntf, FileUtil, Controls, LCLType, ShellCtrls, Process;
 
 { --- DEFINICIÓN DE FUNCIONES DE LÓGICA --- }
 
 var
   RutasPortapapeles: TStringList; // Almacena múltiples rutas para copiar/pegar
+  EsOperacionCorte: Boolean;      // Indica si la acción actual es Cortar o Copiar
 
 procedure AbrirElemento(const Ruta: string);
 procedure IniciarCopia(ListaRutas: TStrings);
+procedure IniciarCorte(ListaRutas: TStrings);
+function EnviarALaPapelera(const Ruta: string): Boolean;
 function EjecutarPegado(const DestinoBase: string): Boolean;
 function CrearCarpeta(const RutaBase: string; out NuevaRuta: string): Boolean;
 function BorrarElemento(const Ruta: string): Boolean;
@@ -21,8 +24,34 @@ function BorrarElementoSilencioso(const Ruta: string): Boolean;
 function RenombrarElemento(const ViejaRuta: string; out NuevaRuta: string): Boolean;
 function EsDirectorio(const Ruta: string): Boolean;
 procedure RefrescarVistas(AListView: TShellListView; ATreeView: TShellTreeView);
+function CopiarDirectorio(RutaOrigen, RutaDestino: string): Boolean;
 
 implementation
+
+function EnviarALaPapelera(const Ruta: string): Boolean;
+{$IFDEF MSWINDOWS}
+var
+  FileOp: TSHFileOpStruct;
+begin
+  FillChar(FileOp, SizeOf(FileOp), 0);
+  FileOp.Wnd := 0;
+  FileOp.wFunc := FO_DELETE;
+  FileOp.pFrom := PChar(Ruta + #0#0); // Doble nulo requerido por WinAPI
+  FileOp.fFlags := FOF_ALLOWUNDO or FOF_NOCONFIRMATION;
+  Result := (SHFileOperation(FileOp) = 0);
+end;
+{$ELSE}
+var
+  Salida: string; // Variable para capturar la salida del comando
+begin
+  // Intentamos usar 'gio trash'
+  Result := RunCommand('gio', ['trash', Ruta], Salida);
+
+  if not Result then
+    // Alternativa si no existe gio
+    Result := RunCommand('trash-put', [Ruta], Salida);
+end;
+{$ENDIF}
 
 procedure AbrirElemento(const Ruta: string);
 begin
@@ -48,6 +77,13 @@ end;
 procedure IniciarCopia(ListaRutas: TStrings);
 begin
   RutasPortapapeles.Assign(ListaRutas);
+  EsOperacionCorte := False;
+end;
+
+procedure IniciarCorte(ListaRutas: TStrings);
+begin
+  RutasPortapapeles.Assign(ListaRutas);
+  EsOperacionCorte := True;
 end;
 
 function CopiarDirectorio(RutaOrigen, RutaDestino: string): Boolean;
@@ -69,10 +105,8 @@ begin
         if (Info.Name <> '.') and (Info.Name <> '..') then
         begin
           if (Info.Attr and faDirectory) = faDirectory then
-            // Es una subcarpeta, llamada recursiva
             Result := CopiarDirectorio(RutaOrigen + Info.Name, RutaDestino + Info.Name)
           else
-            // Es un archivo
             Result := CopyFile(RutaOrigen + Info.Name, RutaDestino + Info.Name, [cffOverwriteFile, cffPreserveTime]);
         end;
       until (FindNext(Info) <> 0) or (not Result);
@@ -86,6 +120,7 @@ function EjecutarPegado(const DestinoBase: string): Boolean;
 var
   Ruta, NombreDestino: string;
   i: Integer;
+  ExitoMover: Boolean;
 begin
   Result := False;
   if (not Assigned(RutasPortapapeles)) or (RutasPortapapeles.Count = 0) then Exit;
@@ -96,13 +131,41 @@ begin
     Ruta := RutasPortapapeles[i];
     NombreDestino := IncludeTrailingPathDelimiter(DestinoBase) + ExtractFileName(Ruta);
 
-    if DirectoryExists(Ruta) then
-      Result := CopiarDirectorio(Ruta, NombreDestino)
-    else
-      Result := CopyFile(Ruta, NombreDestino, [cffOverwriteFile, cffPreserveTime]);
+    // SALVAGUARDA: Si intentas pegar en el mismo sitio exacto de donde cortaste, lo ignoramos para evitar fallos.
+    if SameFileName(Ruta, NombreDestino) then
+      Continue;
 
-    if not Result then ShowMessage('Hubo un problema al pegar uno o más elementos. Verifica los permisos.');
+    if EsOperacionCorte then
+    begin
+      // Intenta mover directamente
+      ExitoMover := RenameFile(Ruta, NombreDestino);
+
+      // Si falla, copiamos y borramos el original
+      if not ExitoMover then
+      begin
+        if DirectoryExists(Ruta) then
+          ExitoMover := CopiarDirectorio(Ruta, NombreDestino)
+        else
+          ExitoMover := CopyFile(Ruta, NombreDestino, [cffOverwriteFile, cffPreserveTime]);
+
+        if ExitoMover then BorrarElementoSilencioso(Ruta);
+      end;
+      Result := Result and ExitoMover;
+    end
+    else
+    begin
+      if DirectoryExists(Ruta) then
+        Result := Result and CopiarDirectorio(Ruta, NombreDestino)
+      else
+        Result := Result and CopyFile(Ruta, NombreDestino, [cffOverwriteFile, cffPreserveTime]);
+    end;
   end;
+
+  // Si se movió correctamente, vaciamos el portapapeles
+  if EsOperacionCorte and Result then
+    RutasPortapapeles.Clear;
+
+  if not Result then ShowMessage('Hubo un problema al pegar uno o más elementos. Verifica los permisos.');
 end;
 
 function CrearCarpeta(const RutaBase: string; out NuevaRuta: string): Boolean;
@@ -133,7 +196,7 @@ end;
 function BorrarElementoSilencioso(const Ruta: string): Boolean;
 begin
   if DirectoryExists(Ruta) then
-    Result := DeleteDirectory(Ruta, False) // Cambiado a False
+    Result := DeleteDirectory(Ruta, False)
   else
     Result := DeleteFile(Ruta);
 end;
@@ -168,7 +231,7 @@ begin
     RutaActual := AListView.Root;
     AListView.Items.BeginUpdate;
     try
-      AListView.Root := ''; 
+      AListView.Root := '';
       AListView.Root := RutaActual;
     finally
       AListView.Items.EndUpdate;
