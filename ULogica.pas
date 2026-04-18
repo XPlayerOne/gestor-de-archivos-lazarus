@@ -28,17 +28,24 @@ function CopiarDirectorio(RutaOrigen, RutaDestino: string): Boolean;
 
 implementation
 
+{$IFDEF MSWINDOWS}
+uses
+  ShellAPI;
+{$ENDIF}
+
 function EnviarALaPapelera(const Ruta: string): Boolean;
 {$IFDEF MSWINDOWS}
 var
-  FileOp: TSHFileOpStruct;
+  FileOp: TSHFILEOPSTRUCTW;
+  RutaWindows: UnicodeString;
 begin
+  RutaWindows := UTF8Decode(Ruta) + #0#0;
   FillChar(FileOp, SizeOf(FileOp), 0);
   FileOp.Wnd := 0;
   FileOp.wFunc := FO_DELETE;
-  FileOp.pFrom := PChar(Ruta + #0#0); // Doble nulo requerido por WinAPI
+  FileOp.pFrom := PWideChar(RutaWindows);
   FileOp.fFlags := FOF_ALLOWUNDO or FOF_NOCONFIRMATION;
-  Result := (SHFileOperation(FileOp) = 0);
+  Result := (SHFileOperationW(@FileOp) = 0);
 end;
 {$ELSE}
 var
