@@ -278,8 +278,9 @@ end;
 
 procedure RefrescarVistas(AListView: TShellListView; ATreeView: TShellTreeView);
 var
-  RutaActual: string;
+  RutaActual, RutaTree: string;
 begin
+  // Refrescar ListView
   if Assigned(AListView) then
   begin
     RutaActual := AListView.Root;
@@ -292,8 +293,19 @@ begin
     end;
   end;
 
+  // Refrescar TreeView
   if Assigned(ATreeView) then
-    ATreeView.Refresh;
+  begin
+    RutaTree := ATreeView.Path;
+    // Refresh(nil) en TShellTreeView fuerza la recarga de los nodos desde el sistema de archivos
+    ATreeView.Refresh(nil);
+    // Restauramos la ruta para evitar que el árbol se colapse o vuelva a la raíz
+    if RutaTree <> '' then
+      ATreeView.Path := RutaTree;
+  end;
+
+  // Procesar mensajes pendientes para asegurar que la interfaz se actualice
+  Application.ProcessMessages;
 end;
 
 initialization
