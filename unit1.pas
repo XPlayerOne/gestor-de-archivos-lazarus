@@ -15,6 +15,7 @@ type
     btnAtras: TToolButton;
     btnHome: TToolButton;
     btnRefrescar: TToolButton;
+    btnPapelera: TToolButton;
     btnSeparador1: TToolButton;
     btnSeparador2: TToolButton;
     btnSubir: TToolButton;
@@ -55,6 +56,7 @@ type
     procedure btnAdelanteClick(Sender: TObject);
     procedure btnAtrasClick(Sender: TObject);
     procedure btnHomeClick(Sender: TObject);
+    procedure btnPapeleraClick(Sender: TObject);
   private
     ListaAtras: TStringList;
     ListaAdelante: TStringList;
@@ -289,6 +291,15 @@ end;
 procedure TForm1.btnHomeClick(Sender: TObject);
 begin
   CambiarRuta(GetUserDir);
+end;
+
+procedure TForm1.btnPapeleraClick(Sender: TObject);
+begin
+  {$IFDEF UNIX}
+  CambiarRuta(IncludeTrailingPathDelimiter(GetUserDir) + '.local/share/Trash/files');
+  {$ELSE}
+  OpenDocument('shell:RecycleBinFolder'); // En Windows la papelera es virtual, se abre externamente
+  {$ENDIF}
 end;
 
 procedure TForm1.ToolButton1Click(Sender: TObject);

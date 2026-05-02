@@ -21,6 +21,7 @@ object Form1: TForm1
     ShowLines = False
     TabOrder = 0
     Options = [tvoAutoExpand, tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowRoot, tvoToolTips, tvoThemedDraw]
+    ObjectTypes = [otFolders, otHidden]
     ShellListView = ShellListView1
     OnChange = ShellTreeView1Change
   end
@@ -38,7 +39,7 @@ object Form1: TForm1
     SmallImagesWidth = 16
     TabOrder = 1
     ViewStyle = vsIcon
-    ObjectTypes = [otFolders, otNonFolders]
+    ObjectTypes = [otFolders, otNonFolders, otHidden]
     ShellTreeView = ShellTreeView1
     OnClick = ShellListView1Click
     OnDblClick = ShellListView1DblClick
@@ -98,6 +99,12 @@ object Form1: TForm1
       Top = 0
       Caption = '🔄 Refrescar'
       OnClick = MenuItemActualizarClick
+    end
+    object btnPapelera: TToolButton
+      Left = 417
+      Top = 0
+      Caption = '🗑 Papelera'
+      OnClick = btnPapeleraClick
     end
   end
   object EditRuta: TEdit
